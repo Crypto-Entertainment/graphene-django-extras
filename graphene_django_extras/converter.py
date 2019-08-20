@@ -108,11 +108,13 @@ def convert_django_field_with_choices(
             return DjangoListField(
                 enum,
                 description=field.help_text or field.verbose_name,
-                required=is_required(field) and input_flag == "create",
+                required=is_required(field)
+                if input_flag == "create"
+                else not field.null,
             )
         return enum(
             description=field.help_text or field.verbose_name,
-            required=is_required(field) and input_flag == "create",
+            required=is_required(field) if input_flag == "create" else not field.null,
         )
     return convert_django_field(field, registry, input_flag, nested_field)
 
@@ -197,7 +199,7 @@ def convert_django_field(field, registry=None, input_flag=None, nested_field=Fal
 def convert_field_to_string(field, registry=None, input_flag=None, nested_field=False):
     return String(
         description=field.help_text or field.verbose_name,
-        required=is_required(field) and input_flag == "create",
+        required=is_required(field) if input_flag == "create" else not field.null,
     )
 
 
@@ -218,7 +220,7 @@ def convert_field_to_id(field, registry=None, input_flag=None, nested_field=Fals
 def convert_field_to_uuid(field, registry=None, input_flag=None, nested_field=False):
     return UUID(
         description=field.help_text or field.verbose_name,
-        required=is_required(field) and input_flag == "create",
+        required=is_required(field) if input_flag == "create" else not field.null,
     )
 
 
@@ -230,7 +232,7 @@ def convert_field_to_uuid(field, registry=None, input_flag=None, nested_field=Fa
 def convert_field_to_int(field, registry=None, input_flag=None, nested_field=False):
     return Int(
         description=field.help_text or field.verbose_name,
-        required=is_required(field) and input_flag == "create",
+        required=is_required(field) if input_flag == "create" else not field.null,
     )
 
 
@@ -248,7 +250,7 @@ def convert_field_to_nullboolean(
 ):
     return Boolean(
         description=field.help_text or field.verbose_name,
-        required=is_required(field) and input_flag == "create",
+        required=is_required(field) if input_flag == "create" else not field.null,
     )
 
 
@@ -256,7 +258,7 @@ def convert_field_to_nullboolean(
 def convert_binary_to_string(field, registry=None, input_flag=None, nested_field=False):
     return Binary(
         description=field.help_text or field.verbose_name,
-        required=is_required(field) and input_flag == "create",
+        required=is_required(field) if input_flag == "create" else not field.null,
     )
 
 
@@ -266,7 +268,7 @@ def convert_binary_to_string(field, registry=None, input_flag=None, nested_field
 def convert_field_to_float(field, registry=None, input_flag=None, nested_field=False):
     return Float(
         description=field.help_text or field.verbose_name,
-        required=is_required(field) and input_flag == "create",
+        required=is_required(field) if input_flag == "create" else not field.null,
     )
 
 
@@ -274,7 +276,7 @@ def convert_field_to_float(field, registry=None, input_flag=None, nested_field=F
 def convert_date_to_string(field, registry=None, input_flag=None, nested_field=False):
     return CustomDate(
         description=field.help_text or field.verbose_name,
-        required=is_required(field) and input_flag == "create",
+        required=is_required(field) if input_flag == "create" else not field.null,
     )
 
 
@@ -284,7 +286,7 @@ def convert_datetime_to_string(
 ):
     return CustomDateTime(
         description=field.help_text or field.verbose_name,
-        required=is_required(field) and input_flag == "create",
+        required=is_required(field) if input_flag == "create" else not field.null,
     )
 
 
@@ -292,7 +294,7 @@ def convert_datetime_to_string(
 def convert_time_to_string(field, registry=None, input_flag=None, nested_field=False):
     return CustomTime(
         description=field.help_text or field.verbose_name,
-        required=is_required(field) and input_flag == "create",
+        required=is_required(field) if input_flag == "create" else not field.null,
     )
 
 
@@ -308,7 +310,10 @@ def convert_onetoone_field_to_djangomodel(
         _type = registry.get_type_for_model(model, for_input=input_flag)
         if not _type:
             return
-        return Field(_type, required=is_required(field) and input_flag == "create")
+        return Field(
+            _type,
+            required=is_required(field) if input_flag == "create" else not field.null,
+        )
 
     return Dynamic(dynamic_type)
 
@@ -322,7 +327,10 @@ def convert_field_to_list_or_connection(
     def dynamic_type():
         if input_flag and not nested_field:
             return DjangoListField(
-                ID, required=is_required(field) and input_flag == "create"
+                ID,
+                required=is_required(field)
+                if input_flag == "create"
+                else not field.null,
             )
         else:
             _type = registry.get_type_for_model(model, for_input=input_flag)
@@ -333,12 +341,17 @@ def convert_field_to_list_or_connection(
             elif _type._meta.filter_fields or _type._meta.filterset_class:
                 return DjangoFilterListField(
                     _type,
-                    required=is_required(field) and input_flag == "create",
+                    required=is_required(field)
+                    if input_flag == "create"
+                    else not field.null,
                     filterset_class=_type._meta.filterset_class,
                 )
             else:
                 return DjangoListField(
-                    _type, required=is_required(field) and input_flag == "create"
+                    _type,
+                    required=is_required(field)
+                    if input_flag == "create"
+                    else not field.null,
                 )
 
     return Dynamic(dynamic_type)
@@ -364,12 +377,17 @@ def convert_many_rel_to_djangomodel(
             elif _type._meta.filter_fields or _type._meta.filterset_class:
                 return DjangoFilterListField(
                     _type,
-                    required=is_required(field) and input_flag == "create",
+                    required=is_required(field)
+                    if input_flag == "create"
+                    else not field.null,
                     filterset_class=_type._meta.filterset_class,
                 )
             else:
                 return DjangoListField(
-                    _type, required=is_required(field) and input_flag == "create"
+                    _type,
+                    required=is_required(field)
+                    if input_flag == "create"
+                    else not field.null,
                 )
 
     return Dynamic(dynamic_type)
@@ -391,7 +409,9 @@ def convert_field_to_djangomodel(
         if input_flag and not nested_field:
             return ID(
                 description=field.help_text or field.verbose_name,
-                required=is_required(field) and input_flag == "create",
+                required=is_required(field)
+                if input_flag == "create"
+                else not field.null,
             )
 
         _type = registry.get_type_for_model(model, for_input=input_flag)
@@ -401,7 +421,7 @@ def convert_field_to_djangomodel(
         return Field(
             _type,
             description=field.help_text or field.verbose_name,
-            required=is_required(field) and input_flag == "create",
+            required=is_required(field) if input_flag == "create" else not field.null,
         )
 
     return Dynamic(dynamic_type)
@@ -435,7 +455,7 @@ def convert_generic_foreign_key_to_object(
         if input_flag:
             return GenericForeignKeyInputType(
                 description="Input Type for a GenericForeignKey field",
-                required=required and input_flag == "create",
+                required=required if input_flag == "create" else not field.null,
             )
 
         _type = registry.get_type_for_enum(key)
@@ -446,7 +466,7 @@ def convert_generic_foreign_key_to_object(
         return Field(
             _type,
             description="Type for a GenericForeignKey field",
-            required=required and input_flag == "create",
+            required=required if input_flag == "create" else not field.null,
         )
 
     return Dynamic(dynamic_type)
@@ -480,7 +500,7 @@ def convert_postgres_array_to_list(
     return List(
         base_type,
         description=field.help_text or field.verbose_name,
-        required=is_required(field) and input_flag == "create",
+        required=is_required(field) if input_flag == "create" else not field.null,
     )
 
 
@@ -491,7 +511,7 @@ def convert_postgres_field_to_string(
 ):
     return JSONString(
         description=field.help_text or field.verbose_name,
-        required=is_required(field) and input_flag == "create",
+        required=is_required(field) if input_flag == "create" else not field.null,
     )
 
 
@@ -505,5 +525,5 @@ def convert_postgres_range_to_string(
     return List(
         inner_type,
         description=field.help_text or field.verbose_name,
-        required=is_required(field) and input_flag == "create",
+        required=is_required(field) if input_flag == "create" else not field.null,
     )
